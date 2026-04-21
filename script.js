@@ -340,3 +340,17 @@ document.addEventListener("keydown", function (event) {
 
 roundOptions.style.display = "block";
 rectangularOptions.style.display = "none";
+
+// ========================
+// CLICK TEXT BOX TO SELECT ALL
+// ========================
+
+const cfmInput = document.getElementById("cfm");
+
+cfmInput.addEventListener("focus", function () {
+  this.select();
+});
+
+cfmInput.addEventListener("dblclick", function () {
+  this.select();
+});
