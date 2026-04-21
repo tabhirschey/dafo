@@ -3,74 +3,145 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Duct Sizing Tool</title>
+  <title>Download Duct Sizing Tool</title>
   <link rel="icon" type="image/png" href="DAFO favicon.png" />
-  <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 60px 20px;
+      text-align: center;
+    }
+
+    .card {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 18px;
+      color: #444;
+      margin-bottom: 20px;
+    }
+
+    #version {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 28px;
+    }
+
+    .download-btn {
+      display: inline-block;
+      background: #0078d7;
+      color: white;
+      padding: 16px 28px;
+      font-size: 18px;
+      text-decoration: none;
+      border-radius: 10px;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+    }
+
+    .download-btn:hover {
+      opacity: 0.92;
+    }
+
+    .note {
+      margin-top: 24px;
+      font-size: 14px;
+      color: #777;
+    }
+
+    .signature {
+      position: fixed;
+      bottom: 10px;
+      right: 14px;
+      font-size: 12px;
+      color: #888;
+      font-style: italic;
+      opacity: 0.8;
+      pointer-events: none;
+    }
+  </style>
 </head>
 
 <body>
-  <div class="container">
+  <div class="card">
     <h1>Duct Sizing Tool</h1>
+    <p>Download the latest Windows version.</p>
 
-   <div class="shape-selector">
-  <div id="rectBtn" class="shape-btn active">
-    <div class="rect-icon"></div>
-    <span>Rectangular</span>
-  </div>
+    <div id="version">Checking latest version...</div>
 
-  <div id="roundBtn" class="shape-btn">
-    <div class="circle-icon"></div>
-    <span>Round</span>
-  </div>
-</div>
+    <a
+      id="downloadBtn"
+      class="download-btn"
+      href="#"
+    >
+      ⬇ Download for Windows
+    </a>
 
-    <label for="airType">Supply or Return?</label>
-    <select id="airType">
-      <option value="S">Supply</option>
-      <option value="R">Return</option>
-    </select>
-
-    <label for="cfm">Enter airflow in CFM</label>
-    <input type="number" id="cfm" placeholder="Enter CFM" />
-
-    <!-- ROUND OPTIONS -->
-    <div id="roundOptions">
-      <label for="maxDiameterChoice">Is there a maximum diameter?</label>
-      <select id="maxDiameterChoice">
-        <option value="N">No</option>
-        <option value="Y">Yes</option>
-      </select>
-
-      <div id="maxDiameterGroup" style="display: none;">
-        <label for="maxDiameter">What is the maximum diameter in inches?</label>
-        <input type="number" id="maxDiameter" placeholder="Example: 18" />
-      </div>
+    <div class="note">
+      If Windows shows a warning, click <b>More info</b> → <b>Run anyway</b>.
     </div>
-
-    <!-- RECTANGULAR OPTIONS -->
-    <div id="rectangularOptions" style="display: none;">
-      <label for="maxChoice">Is there a maximum measurement for the smaller number in the pair?</label>
-      <select id="maxChoice">
-        <option value="N">No</option>
-        <option value="Y">Yes</option>
-      </select>
-
-      <div id="smallDimGroup" style="display: none;">
-        <label for="exactSmallDim">Enter the exact measurement for the smaller number</label>
-        <input type="number" id="exactSmallDim" placeholder="Example: 12" />
-      </div>
-    </div>
-
-    <button id="calculateBtn">Calculate</button>
-
-    <div id="results"></div>
   </div>
 
-  <script src="script.js"></script>
+  <div class="signature">
+    'Duct Around &amp; Find Out'
+  </div>
 
-<div class="signature">
-  'Duct Around & Find Out'
-</div>
+  <script>
+    const owner = "YOURUSERNAME";
+    const repo = "YOURREPO";
 
+    async function loadLatestRelease() {
+      const versionEl = document.getElementById("version");
+      const downloadBtn = document.getElementById("downloadBtn");
+
+      try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+
+        if (!response.ok) {
+          throw new Error("Could not load latest release");
+        }
+
+        const release = await response.json();
+
+        versionEl.textContent = `Latest version: ${release.tag_name}`;
+
+        const installer = release.assets.find(asset =>
+          asset.name === "DuctSizingToolSetup.exe"
+        );
+
+        if (installer) {
+          downloadBtn.href = installer.browser_download_url;
+        } else {
+          downloadBtn.textContent = "Installer not found";
+          downloadBtn.removeAttribute("href");
+          downloadBtn.style.background = "#999";
+          versionEl.textContent += " (installer asset missing)";
+        }
+      } catch (error) {
+        versionEl.textContent = "Could not load latest version.";
+        downloadBtn.textContent = "Download unavailable";
+        downloadBtn.removeAttribute("href");
+        downloadBtn.style.background = "#999";
+        console.error(error);
+      }
+    }
+
+    loadLatestRelease();
+  </script>
 </body>
 </html>
