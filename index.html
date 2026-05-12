@@ -4,22 +4,27 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Duct Sizing Tool</title>
+
   <link rel="icon" type="image/png" href="DAFO favicon.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
   <div class="container">
-    <h1>Duct Sizing Tool</h1>
 
-<a
-  class="download-btn"
-  href="https://github.com/tabhirschey/Duct-Sizer---DAFO/releases/latest/download/DuctSizingToolSetup.exe"
->
-  Download Desktop App
-</a>
+    <div class="title-row">
+      <h1>Duct Sizing Tool</h1>
+
+      <a
+        class="download-btn"
+        href="https://github.com/tabhirschey/Duct-Sizer---DAFO/releases/latest/download/DuctSizingToolSetup.exe"
+      >
+        Download Desktop App
+      </a>
+    </div>
 
     <div class="shape-selector">
+
       <div id="rectBtn" class="shape-btn active">
         <div class="rect-icon"></div>
         <span>Rectangular</span>
@@ -29,49 +34,96 @@
         <div class="circle-icon"></div>
         <span>Round</span>
       </div>
+
     </div>
 
     <label for="airType">Supply or Return?</label>
+
     <select id="airType">
       <option value="S">Supply</option>
       <option value="R">Return</option>
     </select>
 
     <label for="cfm">Enter airflow in CFM</label>
-    <input type="number" id="cfm" placeholder="Enter CFM" min="1" />
+
+    <input
+      type="number"
+      id="cfm"
+      placeholder="Enter CFM"
+      min="1"
+    />
+
+    <!-- ROUND OPTIONS -->
 
     <div id="roundOptions" style="display: none;">
-      <label for="maxDiameterChoice">Is there a maximum diameter?</label>
+
+      <label for="maxDiameterChoice">
+        Is there a maximum diameter?
+      </label>
+
       <select id="maxDiameterChoice">
         <option value="N">No</option>
         <option value="Y">Yes</option>
       </select>
 
       <div id="maxDiameterGroup" style="display: none;">
-        <label for="maxDiameter">Enter the maximum diameter</label>
-        <input type="number" id="maxDiameter" placeholder="Example: 18" min="6" step="2" />
+
+        <label for="maxDiameter">
+          Enter the maximum diameter
+        </label>
+
+        <input
+          type="number"
+          id="maxDiameter"
+          placeholder="Example: 18"
+          min="6"
+          step="2"
+        />
+
       </div>
     </div>
 
+    <!-- RECTANGULAR OPTIONS -->
+
     <div id="rectangularOptions" style="display: block;">
-      <label for="maxChoice">Is there a maximum height?</label>
+
+      <label for="maxChoice">
+        Is there a maximum height?
+      </label>
+
       <select id="maxChoice">
         <option value="N">No</option>
         <option value="Y">Yes</option>
       </select>
 
       <div id="smallDimGroup" style="display: none;">
-        <label for="exactSmallDim">Enter the maximum height</label>
-        <input type="number" id="exactSmallDim" placeholder="Example: 18" min="10" step="2" />
+
+        <label for="exactSmallDim">
+          Enter the maximum height
+        </label>
+
+        <input
+          type="number"
+          id="exactSmallDim"
+          placeholder="Example: 18"
+          min="10"
+          step="2"
+        />
+
       </div>
     </div>
 
-    <button id="calculateBtn">Calculate</button>
+    <button id="calculateBtn">
+      Calculate
+    </button>
 
     <div id="results"></div>
+
   </div>
 
-  <div class="signature">'Duct Around &amp; Find Out'</div>
+  <div class="signature">
+    'Duct Around &amp; Find Out'
+  </div>
 
   <script src="script.js"></script>
 </body>
