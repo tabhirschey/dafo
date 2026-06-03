@@ -22,7 +22,7 @@
           Download Desktop App
         </a>
 
-        <div id="version">Checking latest version...</div>
+        <div id="version">Website version: v1.0.8</div>
       </div>
     </div>
 
@@ -81,28 +81,6 @@
   <div class="signature">
     'Duct Around &amp; Find Out'
   </div>
-
-  <script>
-    async function loadLatestVersion() {
-      const versionEl = document.getElementById("version");
-
-      try {
-        const response = await fetch("https://api.github.com/repos/tabhirschey/Duct-Sizer---DAFO/releases/latest");
-
-        if (!response.ok) {
-          throw new Error("Could not load latest release");
-        }
-
-        const release = await response.json();
-        versionEl.textContent = `Latest version: ${release.tag_name}`;
-      } catch (error) {
-        versionEl.textContent = "Latest version unavailable";
-        console.error(error);
-      }
-    }
-
-    loadLatestVersion();
-  </script>
 
   <script src="script.js"></script>
 </body>
