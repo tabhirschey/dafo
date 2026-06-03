@@ -22,6 +22,7 @@ const MIN_DIM_IN = 10;
 const STEP_IN = 2;
 const MAX_DIM_IN = 120;
 const MAX_RESULTS = 10;
+const AREA_TOLERANCE = 1.05;
 
 // ========================
 // DOM ELEMENTS
@@ -220,12 +221,31 @@ function runRectangularCalculation(airType, cfm) {
     return;
   }
 
- options.sort((a, b) => {
-  if (a.area !== b.area) return a.area - b.area;
-  if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-  if (a.w !== b.w) return a.w - b.w;
-  return a.h - b.h;
-});
+  const minArea = Math.min(...options.map(o => o.area));
+
+  options.forEach(o => {
+    o.inAreaBand = o.area <= minArea * AREA_TOLERANCE;
+  });
+
+  options.sort((a, b) => {
+    if (a.inAreaBand !== b.inAreaBand) {
+      return a.inAreaBand ? -1 : 1;
+    }
+
+    if (a.ratioDiff !== b.ratioDiff) {
+      return a.ratioDiff - b.ratioDiff;
+    }
+
+    if (a.area !== b.area) {
+      return a.area - b.area;
+    }
+
+    if (a.w !== b.w) {
+      return a.w - b.w;
+    }
+
+    return a.h - b.h;
+  });
 
   const limit = Math.min(options.length, MAX_RESULTS);
 
