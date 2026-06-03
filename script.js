@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.8";
+const APP_VERSION = "v1.1.9";
 
 // ========================
 // SHARED CONSTANTS
@@ -198,15 +198,15 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
-function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
+function getOptionNotes(option, FrictionOption, SquareOption) {
   const notes = [];
 
-  if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
+  if (FrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
     notes.push("🎯 Closest friction");
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
-    notes.push("◼ Closest square");
+    notes.push("◼  Closest square");
   }
 
   return notes.join("<br>");
