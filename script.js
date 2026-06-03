@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.16";
+const APP_VERSION = "v1.1.17";
 
 // ========================
 // SHARED CONSTANTS
@@ -31,6 +31,11 @@ const TOP_RECOMMENDATIONS = 5;
 
 const RECT_FRICTION_ALLOWANCE = 1.00;
 const MIN_REASONABLE_FRICTION_FACTOR = 0.55;
+
+// RECTANGULAR SCORING WEIGHTS
+const RATIO_WEIGHT = 0.60;
+const FRICTION_WEIGHT = 0.30;
+const AREA_WEIGHT = 0.10;
 
 // ========================
 // DOM ELEMENTS
@@ -179,8 +184,9 @@ function optionKey(o) {
 
 function sortRectangularOptions(options) {
   return [...options].sort((a, b) => {
-    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+    if (a.score !== b.score) return a.score - b.score;
     if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
     if (a.area !== b.area) return a.area - b.area;
     if (a.w !== b.w) return a.w - b.w;
     return a.h - b.h;
@@ -256,12 +262,31 @@ function runRectangularCalculation(airType, cfm) {
     return;
   }
 
+  const minArea = Math.min(...options.map(o => o.area));
+
+  options.forEach(o => {
+    const areaPenalty = (o.area - minArea) / minArea;
+    const frictionPenalty = o.frictionDiff / targetFriction;
+
+    o.areaPenalty = areaPenalty;
+    o.score =
+      o.ratioDiff * RATIO_WEIGHT +
+      frictionPenalty * FRICTION_WEIGHT +
+      areaPenalty * AREA_WEIGHT;
+  });
+
   const rankedOptions = sortRectangularOptions(options);
   const topOptions = rankedOptions.slice(0, TOP_RECOMMENDATIONS);
   const otherOptions = rankedOptions.slice(TOP_RECOMMENDATIONS, MAX_RESULTS);
 
   const closestFrictionOption = topOptions.length
-    ? sortRectangularOptions(topOptions)[0]
+    ? [...topOptions].sort((a, b) => {
+        if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+        if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+        if (a.area !== b.area) return a.area - b.area;
+        if (a.w !== b.w) return a.w - b.w;
+        return a.h - b.h;
+      })[0]
     : null;
 
   const closestSquareOption = topOptions.length
