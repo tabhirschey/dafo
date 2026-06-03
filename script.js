@@ -220,11 +220,12 @@ function runRectangularCalculation(airType, cfm) {
     return;
   }
 
-  options.sort((a, b) => {
-    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-    if (a.area !== b.area) return a.area - b.area;
-    return a.friction - b.friction;
-  });
+ options.sort((a, b) => {
+  if (a.area !== b.area) return a.area - b.area;
+  if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+  if (a.w !== b.w) return a.w - b.w;
+  return a.h - b.h;
+});
 
   const limit = Math.min(options.length, MAX_RESULTS);
 
