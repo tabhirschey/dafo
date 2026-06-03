@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.10";
+const APP_VERSION = "v1.1.12";
 
 // ========================
 // SHARED CONSTANTS
@@ -198,10 +198,10 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
-function getOptionNotes(option, FrictionOption, SquareOption) {
+function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
   const notes = [];
 
-  if (FrictionOption && optionKey(option) === optionKey(FrictionOption)) {
+  if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
     notes.push("🎯 Closest friction");
   }
 
