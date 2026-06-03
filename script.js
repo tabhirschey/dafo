@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.7";
+const APP_VERSION = "v1.1.8";
 
 // ========================
 // SHARED CONSTANTS
@@ -198,14 +198,18 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
-function sortByFrictionClosestToTarget(options) {
-  return [...options].sort((a, b) => {
-    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
-    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-    if (a.area !== b.area) return a.area - b.area;
-    if (a.w !== b.w) return a.w - b.w;
-    return a.h - b.h;
-  });
+function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
+  const notes = [];
+
+  if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
+    notes.push("🎯 Closest friction");
+  }
+
+  if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
+    notes.push("◼ Closest square");
+  }
+
+  return notes.join("<br>");
 }
 
 function runRectangularCalculation(airType, cfm) {
@@ -323,7 +327,8 @@ function runRectangularCalculation(airType, cfm) {
     addUnique(option);
   }
 
-  const displayTopOptions = sortByFrictionClosestToTarget(topOptions);
+  const closestFrictionOption = getBestByScore(topOptions, o => o.frictionDiff);
+  const closestSquareOption = getBestByScore(topOptions, o => o.ratioDiff);
 
   const otherOptions = options
     .filter(o => !used.has(optionKey(o)))
@@ -346,16 +351,18 @@ function runRectangularCalculation(airType, cfm) {
         <tr>
           <th>Size</th>
           <th>Friction</th>
+          <th>Notes</th>
         </tr>
       </thead>
       <tbody>
   `;
 
-  displayTopOptions.forEach(o => {
+  topOptions.forEach(o => {
     output += `
       <tr>
         <td>${o.w}×${o.h}</td>
         <td>${o.friction.toFixed(3)}</td>
+        <td>${getOptionNotes(o, closestFrictionOption, closestSquareOption)}</td>
       </tr>
     `;
   });
