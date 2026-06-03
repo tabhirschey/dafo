@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.15";
+const APP_VERSION = "v1.1.16";
 
 // ========================
 // SHARED CONSTANTS
@@ -29,12 +29,7 @@ const MAX_DIM_IN = 120;
 const MAX_RESULTS = 10;
 const TOP_RECOMMENDATIONS = 5;
 
-// Allows close ductulator-style options slightly above target friction.
 const RECT_FRICTION_ALLOWANCE = 1.00;
-
-// Rectangular ranking behavior
-const PREFERRED_BALANCED_ASPECT_RATIO = 1.15;
-const MAX_REASONABLE_RATIO_DIFF = 0.30;
 const MIN_REASONABLE_FRICTION_FACTOR = 0.55;
 
 // ========================
@@ -182,27 +177,21 @@ function optionKey(o) {
   return `${o.w}x${o.h}`;
 }
 
-function getBestByScore(options, scoringFunction) {
-  if (options.length === 0) return null;
-
+function sortRectangularOptions(options) {
   return [...options].sort((a, b) => {
-    const scoreA = scoringFunction(a);
-    const scoreB = scoringFunction(b);
-
-    if (scoreA !== scoreB) return scoreA - scoreB;
     if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
     if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
     if (a.area !== b.area) return a.area - b.area;
     if (a.w !== b.w) return a.w - b.w;
     return a.h - b.h;
-  })[0];
+  });
 }
 
 function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
   const notes = [];
 
   if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
-    notes.push("🎯Closest friction");
+    notes.push("🎯 Closest friction");
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
@@ -252,7 +241,6 @@ function runRectangularCalculation(airType, cfm) {
         area: w * h,
         ratio: w / h,
         ratioDiff: aspectRatioDiff(w, h),
-        balancedAspectDiff: Math.abs(w / h - PREFERRED_BALANCED_ASPECT_RATIO),
         friction,
         frictionDiff: Math.abs(friction - targetFriction)
       });
@@ -268,79 +256,23 @@ function runRectangularCalculation(airType, cfm) {
     return;
   }
 
-  const minArea = Math.min(...options.map(o => o.area));
+  const rankedOptions = sortRectangularOptions(options);
+  const topOptions = rankedOptions.slice(0, TOP_RECOMMENDATIONS);
+  const otherOptions = rankedOptions.slice(TOP_RECOMMENDATIONS, MAX_RESULTS);
 
-  options.forEach(o => {
-    o.areaPenalty = (o.area - minArea) / minArea;
+  const closestFrictionOption = topOptions.length
+    ? sortRectangularOptions(topOptions)[0]
+    : null;
 
-    o.generalScore =
-      (o.frictionDiff / targetFriction) * 0.45 +
-      o.ratioDiff * 0.45 +
-      o.areaPenalty * 0.10;
-  });
-
-  const reasonableShapeOptions = options.filter(o => o.ratioDiff <= MAX_REASONABLE_RATIO_DIFF);
-
-  const topOptions = [];
-  const used = new Set();
-
-  function addUnique(option) {
-    if (!option) return;
-    const key = optionKey(option);
-    if (used.has(key)) return;
-
-    topOptions.push(option);
-    used.add(key);
-  }
-
-  addUnique(getBestByScore(reasonableShapeOptions, o =>
-    o.balancedAspectDiff * 0.80 +
-    (o.frictionDiff / targetFriction) * 0.15 +
-    o.areaPenalty * 0.05
-  ));
-
-  addUnique(getBestByScore(reasonableShapeOptions, o =>
-    (o.frictionDiff / targetFriction) * 0.70 +
-    o.ratioDiff * 0.25 +
-    o.areaPenalty * 0.05
-  ));
-
-  addUnique(getBestByScore(options, o =>
-    o.ratioDiff * 0.75 +
-    (o.frictionDiff / targetFriction) * 0.20 +
-    o.areaPenalty * 0.05
-  ));
-
-  const remainingRanked = options
-    .filter(o => !used.has(optionKey(o)))
-    .sort((a, b) => {
-      if (a.generalScore !== b.generalScore) return a.generalScore - b.generalScore;
-      if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
-      if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-      if (a.area !== b.area) return a.area - b.area;
-      if (a.w !== b.w) return a.w - b.w;
-      return a.h - b.h;
-    });
-
-  for (const option of remainingRanked) {
-    if (topOptions.length >= TOP_RECOMMENDATIONS) break;
-    addUnique(option);
-  }
-
-  const closestFrictionOption = getBestByScore(topOptions, o => o.frictionDiff);
-  const closestSquareOption = getBestByScore(topOptions, o => o.ratioDiff);
-
-  const otherOptions = options
-    .filter(o => !used.has(optionKey(o)))
-    .sort((a, b) => {
-      if (a.generalScore !== b.generalScore) return a.generalScore - b.generalScore;
-      if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
-      if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-      if (a.area !== b.area) return a.area - b.area;
-      if (a.w !== b.w) return a.w - b.w;
-      return a.h - b.h;
-    })
-    .slice(0, MAX_RESULTS - TOP_RECOMMENDATIONS);
+  const closestSquareOption = topOptions.length
+    ? [...topOptions].sort((a, b) => {
+        if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+        if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+        if (a.area !== b.area) return a.area - b.area;
+        if (a.w !== b.w) return a.w - b.w;
+        return a.h - b.h;
+      })[0]
+    : null;
 
   let output = `
     <b><u>${displayAirType(airType)}</u></b><br><br>
