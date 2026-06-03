@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.14";
+const APP_VERSION = "v1.1.15";
 
 // ========================
 // SHARED CONSTANTS
@@ -35,7 +35,7 @@ const RECT_FRICTION_ALLOWANCE = 1.00;
 // Rectangular ranking behavior
 const PREFERRED_BALANCED_ASPECT_RATIO = 1.15;
 const MAX_REASONABLE_RATIO_DIFF = 0.30;
-const MIN_REASONABLE_FRICTION_FACTOR = 0.70;
+const MIN_REASONABLE_FRICTION_FACTOR = 0.55;
 
 // ========================
 // DOM ELEMENTS
