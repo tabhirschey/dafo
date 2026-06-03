@@ -102,6 +102,24 @@ button {
   line-height: 1.5;
 }
 
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.results-table th,
+.results-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+
+.results-table th {
+  font-weight: bold;
+}
+
 .shape-selector {
   display: flex;
   justify-content: center;
