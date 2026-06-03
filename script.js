@@ -254,6 +254,7 @@ function runRectangularCalculation(airType, cfm) {
   });
 
   const topOptions = options.slice(0, 3);
+  const otherOptions = options.slice(3, MAX_RESULTS);
 
   let output = `
     <b><u>${displayAirType(airType)}</u></b><br><br>
@@ -282,6 +283,17 @@ function runRectangularCalculation(airType, cfm) {
       </tbody>
     </table>
   `;
+
+  if (otherOptions.length > 0) {
+    output += `
+      <br>
+      <b>Other options:</b><br>
+    `;
+
+    otherOptions.forEach(o => {
+      output += `${o.w}×${o.h}<br>`;
+    });
+  }
 
   resultsDiv.innerHTML = output;
 }
