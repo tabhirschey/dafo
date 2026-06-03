@@ -1,4 +1,9 @@
 // ========================
+// VERSION
+// ========================
+const APP_VERSION = "v1.0.8";
+
+// ========================
 // SHARED CONSTANTS
 // ========================
 const AIR_DENSITY = 1.204;
@@ -22,7 +27,15 @@ const MIN_DIM_IN = 10;
 const STEP_IN = 2;
 const MAX_DIM_IN = 120;
 const MAX_RESULTS = 10;
-const AREA_TOLERANCE = 1.05;
+
+// Rectangular ranking weights.
+// Friction is primary, but squareness and compactness still matter.
+const FRICTION_WEIGHT = 0.80;
+const SQUARENESS_WEIGHT = 0.15;
+const AREA_WEIGHT = 0.05;
+
+// Allows close ductulator-style options slightly above target friction.
+const RECT_FRICTION_ALLOWANCE = 1.10;
 
 // ========================
 // DOM ELEMENTS
@@ -46,6 +59,11 @@ const rectangularOptions = document.getElementById("rectangularOptions");
 const maxChoiceEl = document.getElementById("maxChoice");
 const smallDimGroup = document.getElementById("smallDimGroup");
 const exactSmallDimEl = document.getElementById("exactSmallDim");
+
+const versionEl = document.getElementById("version");
+if (versionEl) {
+  versionEl.textContent = `Website version: ${APP_VERSION}`;
+}
 
 // ========================
 // SHARED FUNCTIONS
@@ -160,17 +178,6 @@ function aspectRatioDiff(w, h) {
   return Math.abs(w / h - 1.0);
 }
 
-function passesFrictionLimit(cfm, w, h, targetFriction) {
-  const deIn = equivalentDiameterIn(w, h);
-  const friction = frictionInWgPer100Ft(cfm, deIn);
-  const effectiveTarget = targetFriction * SAFETY_FACTOR;
-
-  return {
-    passes: friction <= effectiveTarget,
-    friction
-  };
-}
-
 function runRectangularCalculation(airType, cfm) {
   const targetFriction = airType === "S" ? 0.10 : 0.05;
   const maxChoice = maxChoiceEl.value;
@@ -199,15 +206,18 @@ function runRectangularCalculation(airType, cfm) {
     for (let h = MIN_DIM_IN; h <= w; h += STEP_IN) {
       if (h > maxAllowedHeight) continue;
 
-      const result = passesFrictionLimit(cfm, w, h, targetFriction);
-      if (!result.passes) continue;
+      const deIn = equivalentDiameterIn(w, h);
+      const friction = frictionInWgPer100Ft(cfm, deIn);
+
+      if (friction > targetFriction * RECT_FRICTION_ALLOWANCE) continue;
 
       options.push({
         w,
         h,
         area: w * h,
         ratioDiff: aspectRatioDiff(w, h),
-        friction: result.friction
+        friction,
+        frictionDiff: Math.abs(friction - targetFriction)
       });
     }
   }
@@ -224,44 +234,54 @@ function runRectangularCalculation(airType, cfm) {
   const minArea = Math.min(...options.map(o => o.area));
 
   options.forEach(o => {
-    o.inAreaBand = o.area <= minArea * AREA_TOLERANCE;
+    const frictionPenalty = o.frictionDiff / targetFriction;
+    const squarePenalty = o.ratioDiff;
+    const areaPenalty = (o.area - minArea) / minArea;
+
+    o.score =
+      frictionPenalty * FRICTION_WEIGHT +
+      squarePenalty * SQUARENESS_WEIGHT +
+      areaPenalty * AREA_WEIGHT;
   });
 
   options.sort((a, b) => {
-    if (a.inAreaBand !== b.inAreaBand) {
-      return a.inAreaBand ? -1 : 1;
-    }
-
-    if (a.ratioDiff !== b.ratioDiff) {
-      return a.ratioDiff - b.ratioDiff;
-    }
-
-    if (a.area !== b.area) {
-      return a.area - b.area;
-    }
-
-    if (a.w !== b.w) {
-      return a.w - b.w;
-    }
-
+    if (a.score !== b.score) return a.score - b.score;
+    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+    if (a.area !== b.area) return a.area - b.area;
+    if (a.w !== b.w) return a.w - b.w;
     return a.h - b.h;
   });
 
-  const limit = Math.min(options.length, MAX_RESULTS);
+  const topOptions = options.slice(0, 3);
 
   let output = `
     <b><u>${displayAirType(airType)}</u></b><br><br>
-    <b>Best:</b> ${options[0].w}x${options[0].h}
+    <b>Best 3 Options:</b>
+
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Size</th>
+          <th>Friction</th>
+        </tr>
+      </thead>
+      <tbody>
   `;
 
-  if (limit > 1) {
-    output += `<br><br><b>Other options:</b><br>`;
+  topOptions.forEach(o => {
+    output += `
+      <tr>
+        <td>${o.w}×${o.h}</td>
+        <td>${o.friction.toFixed(3)}</td>
+      </tr>
+    `;
+  });
 
-    for (let i = 1; i < limit; i++) {
-      output += `${options[i].w}x${options[i].h}`;
-      if (i < limit - 1) output += "<br>";
-    }
-  }
+  output += `
+      </tbody>
+    </table>
+  `;
 
   resultsDiv.innerHTML = output;
 }
