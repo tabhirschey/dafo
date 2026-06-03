@@ -14,12 +14,16 @@
     <div class="title-row">
       <h1>Duct Sizing Tool</h1>
 
-      <a
-        class="download-btn"
-        href="https://github.com/tabhirschey/Duct-Sizer---DAFO/releases/latest/download/DuctSizingToolSetup.exe"
-      >
-        Download Desktop App
-      </a>
+      <div class="download-box">
+        <a
+          class="download-btn"
+          href="https://github.com/tabhirschey/Duct-Sizer---DAFO/releases/latest/download/DuctSizingToolSetup.exe"
+        >
+          Download Desktop App
+        </a>
+
+        <div id="version">Checking latest version...</div>
+      </div>
     </div>
 
     <div class="shape-selector">
@@ -77,6 +81,28 @@
   <div class="signature">
     'Duct Around &amp; Find Out'
   </div>
+
+  <script>
+    async function loadLatestVersion() {
+      const versionEl = document.getElementById("version");
+
+      try {
+        const response = await fetch("https://api.github.com/repos/tabhirschey/Duct-Sizer---DAFO/releases/latest");
+
+        if (!response.ok) {
+          throw new Error("Could not load latest release");
+        }
+
+        const release = await response.json();
+        versionEl.textContent = `Latest version: ${release.tag_name}`;
+      } catch (error) {
+        versionEl.textContent = "Latest version unavailable";
+        console.error(error);
+      }
+    }
+
+    loadLatestVersion();
+  </script>
 
   <script src="script.js"></script>
 </body>
