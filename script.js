@@ -206,7 +206,7 @@ function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
-    notes.push("◼  Closest square");
+    notes.push("◼   Closest square");
   }
 
   return notes.join("<br>");
