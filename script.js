@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.12";
+const APP_VERSION = "v1.1.14";
 
 // ========================
 // SHARED CONSTANTS
@@ -202,11 +202,11 @@ function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
   const notes = [];
 
   if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
-    notes.push("🎯 Closest friction");
+    notes.push("🎯Closest friction");
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
-    notes.push("◼   Closest square");
+    notes.push("◼ Closest square");
   }
 
   return notes.join("<br>");
