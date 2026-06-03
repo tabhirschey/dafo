@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.6";
+const APP_VERSION = "v1.1.7";
 
 // ========================
 // SHARED CONSTANTS
@@ -30,7 +30,7 @@ const MAX_RESULTS = 10;
 const TOP_RECOMMENDATIONS = 5;
 
 // Allows close ductulator-style options slightly above target friction.
-const RECT_FRICTION_ALLOWANCE = 1.05;
+const RECT_FRICTION_ALLOWANCE = 1.00;
 
 // Rectangular ranking behavior
 const PREFERRED_BALANCED_ASPECT_RATIO = 1.15;
