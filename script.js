@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.5";
+const APP_VERSION = "v1.1.6";
 
 // ========================
 // SHARED CONSTANTS
@@ -198,6 +198,16 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
+function sortByFrictionClosestToTarget(options) {
+  return [...options].sort((a, b) => {
+    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+    if (a.area !== b.area) return a.area - b.area;
+    if (a.w !== b.w) return a.w - b.w;
+    return a.h - b.h;
+  });
+}
+
 function runRectangularCalculation(airType, cfm) {
   const targetFriction = airType === "S" ? 0.10 : 0.05;
   const maxChoice = maxChoiceEl.value;
@@ -279,29 +289,24 @@ function runRectangularCalculation(airType, cfm) {
     used.add(key);
   }
 
-  // 1. Best overall balance.
-  // This favors a practical rectangular shape near 1.15:1, not too skinny, not too oversized.
   addUnique(getBestByScore(reasonableShapeOptions, o =>
     o.balancedAspectDiff * 0.80 +
     (o.frictionDiff / targetFriction) * 0.15 +
     o.areaPenalty * 0.05
   ));
 
-  // 2. Best friction match, but don't let skinny ducts win just because friction is close.
   addUnique(getBestByScore(reasonableShapeOptions, o =>
     (o.frictionDiff / targetFriction) * 0.70 +
     o.ratioDiff * 0.25 +
     o.areaPenalty * 0.05
   ));
 
-  // 3. Most square practical option.
   addUnique(getBestByScore(options, o =>
     o.ratioDiff * 0.75 +
     (o.frictionDiff / targetFriction) * 0.20 +
     o.areaPenalty * 0.05
   ));
 
-  // 4 and 5. Fill remaining Best 5 using general ranking.
   const remainingRanked = options
     .filter(o => !used.has(optionKey(o)))
     .sort((a, b) => {
@@ -317,6 +322,8 @@ function runRectangularCalculation(airType, cfm) {
     if (topOptions.length >= TOP_RECOMMENDATIONS) break;
     addUnique(option);
   }
+
+  const displayTopOptions = sortByFrictionClosestToTarget(topOptions);
 
   const otherOptions = options
     .filter(o => !used.has(optionKey(o)))
@@ -344,7 +351,7 @@ function runRectangularCalculation(airType, cfm) {
       <tbody>
   `;
 
-  topOptions.forEach(o => {
+  displayTopOptions.forEach(o => {
     output += `
       <tr>
         <td>${o.w}×${o.h}</td>
