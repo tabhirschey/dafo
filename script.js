@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.1.9";
+const APP_VERSION = "v1.1.10";
 
 // ========================
 // SHARED CONSTANTS
@@ -198,15 +198,15 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
-function getOptionNotes(option, FrictionOption, SquareOption) {
+function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
   const notes = [];
 
-  if (FrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
+  if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
     notes.push("🎯 Closest friction");
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
-    notes.push("◼  Closest square");
+    notes.push("◼ Closest square");
   }
 
   return notes.join("<br>");
@@ -370,17 +370,16 @@ function runRectangularCalculation(airType, cfm) {
   output += `
       </tbody>
     </table>
+    <br>
+    <b>Other options:</b><br>
   `;
 
   if (otherOptions.length > 0) {
-    output += `
-      <br>
-      <b>Other options:</b><br>
-    `;
-
     otherOptions.forEach(o => {
       output += `${o.w}×${o.h}<br>`;
     });
+  } else {
+    output += `No other valid options found.`;
   }
 
   resultsDiv.innerHTML = output;
