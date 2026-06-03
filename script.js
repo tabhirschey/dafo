@@ -35,7 +35,7 @@ const SQUARENESS_WEIGHT = 0.50;
 const AREA_WEIGHT = 0.05;
 
 // Allows close ductulator-style options slightly above target friction.
-const RECT_FRICTION_ALLOWANCE = 1.25;
+const RECT_FRICTION_ALLOWANCE = 1.05;
 
 // ========================
 // DOM ELEMENTS
