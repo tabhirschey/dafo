@@ -198,15 +198,15 @@ function getBestByScore(options, scoringFunction) {
   })[0];
 }
 
-function getOptionNotes(option, closestFrictionOption, closestSquareOption) {
+function getOptionNotes(option, FrictionOption, SquareOption) {
   const notes = [];
 
-  if (closestFrictionOption && optionKey(option) === optionKey(closestFrictionOption)) {
+  if (FrictionOption && optionKey(option) === optionKey(FrictionOption)) {
     notes.push("🎯 Closest friction");
   }
 
   if (closestSquareOption && optionKey(option) === optionKey(closestSquareOption)) {
-    notes.push("◼ Closest square");
+    notes.push("◼  Closest square");
   }
 
   return notes.join("<br>");
