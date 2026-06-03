@@ -1,7 +1,7 @@
 // ========================
 // VERSION
 // ========================
-const APP_VERSION = "v1.0.8";
+const APP_VERSION = "v1.1.5";
 
 // ========================
 // SHARED CONSTANTS
@@ -27,15 +27,15 @@ const MIN_DIM_IN = 10;
 const STEP_IN = 2;
 const MAX_DIM_IN = 120;
 const MAX_RESULTS = 10;
-
-// Rectangular ranking weights.
-// Friction is primary, but squareness and compactness still matter.
-const FRICTION_WEIGHT = 0.65;
-const SQUARENESS_WEIGHT = 0.30;
-const AREA_WEIGHT = 0.05;
+const TOP_RECOMMENDATIONS = 5;
 
 // Allows close ductulator-style options slightly above target friction.
 const RECT_FRICTION_ALLOWANCE = 1.05;
+
+// Rectangular ranking behavior
+const PREFERRED_BALANCED_ASPECT_RATIO = 1.15;
+const MAX_REASONABLE_RATIO_DIFF = 0.30;
+const MIN_REASONABLE_FRICTION_FACTOR = 0.70;
 
 // ========================
 // DOM ELEMENTS
@@ -178,6 +178,26 @@ function aspectRatioDiff(w, h) {
   return Math.abs(w / h - 1.0);
 }
 
+function optionKey(o) {
+  return `${o.w}x${o.h}`;
+}
+
+function getBestByScore(options, scoringFunction) {
+  if (options.length === 0) return null;
+
+  return [...options].sort((a, b) => {
+    const scoreA = scoringFunction(a);
+    const scoreB = scoringFunction(b);
+
+    if (scoreA !== scoreB) return scoreA - scoreB;
+    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+    if (a.area !== b.area) return a.area - b.area;
+    if (a.w !== b.w) return a.w - b.w;
+    return a.h - b.h;
+  })[0];
+}
+
 function runRectangularCalculation(airType, cfm) {
   const targetFriction = airType === "S" ? 0.10 : 0.05;
   const maxChoice = maxChoiceEl.value;
@@ -210,12 +230,15 @@ function runRectangularCalculation(airType, cfm) {
       const friction = frictionInWgPer100Ft(cfm, deIn);
 
       if (friction > targetFriction * RECT_FRICTION_ALLOWANCE) continue;
+      if (friction < targetFriction * MIN_REASONABLE_FRICTION_FACTOR) continue;
 
       options.push({
         w,
         h,
         area: w * h,
+        ratio: w / h,
         ratioDiff: aspectRatioDiff(w, h),
+        balancedAspectDiff: Math.abs(w / h - PREFERRED_BALANCED_ASPECT_RATIO),
         friction,
         frictionDiff: Math.abs(friction - targetFriction)
       });
@@ -234,31 +257,82 @@ function runRectangularCalculation(airType, cfm) {
   const minArea = Math.min(...options.map(o => o.area));
 
   options.forEach(o => {
-    const frictionPenalty = o.frictionDiff / targetFriction;
-    const squarePenalty = o.ratioDiff;
-    const areaPenalty = (o.area - minArea) / minArea;
+    o.areaPenalty = (o.area - minArea) / minArea;
 
-    o.score =
-      frictionPenalty * FRICTION_WEIGHT +
-      squarePenalty * SQUARENESS_WEIGHT +
-      areaPenalty * AREA_WEIGHT;
+    o.generalScore =
+      (o.frictionDiff / targetFriction) * 0.45 +
+      o.ratioDiff * 0.45 +
+      o.areaPenalty * 0.10;
   });
 
-  options.sort((a, b) => {
-    if (a.score !== b.score) return a.score - b.score;
-    if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
-    if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
-    if (a.area !== b.area) return a.area - b.area;
-    if (a.w !== b.w) return a.w - b.w;
-    return a.h - b.h;
-  });
+  const reasonableShapeOptions = options.filter(o => o.ratioDiff <= MAX_REASONABLE_RATIO_DIFF);
 
-  const topOptions = options.slice(0, 3);
-  const otherOptions = options.slice(3, MAX_RESULTS);
+  const topOptions = [];
+  const used = new Set();
+
+  function addUnique(option) {
+    if (!option) return;
+    const key = optionKey(option);
+    if (used.has(key)) return;
+
+    topOptions.push(option);
+    used.add(key);
+  }
+
+  // 1. Best overall balance.
+  // This favors a practical rectangular shape near 1.15:1, not too skinny, not too oversized.
+  addUnique(getBestByScore(reasonableShapeOptions, o =>
+    o.balancedAspectDiff * 0.80 +
+    (o.frictionDiff / targetFriction) * 0.15 +
+    o.areaPenalty * 0.05
+  ));
+
+  // 2. Best friction match, but don't let skinny ducts win just because friction is close.
+  addUnique(getBestByScore(reasonableShapeOptions, o =>
+    (o.frictionDiff / targetFriction) * 0.70 +
+    o.ratioDiff * 0.25 +
+    o.areaPenalty * 0.05
+  ));
+
+  // 3. Most square practical option.
+  addUnique(getBestByScore(options, o =>
+    o.ratioDiff * 0.75 +
+    (o.frictionDiff / targetFriction) * 0.20 +
+    o.areaPenalty * 0.05
+  ));
+
+  // 4 and 5. Fill remaining Best 5 using general ranking.
+  const remainingRanked = options
+    .filter(o => !used.has(optionKey(o)))
+    .sort((a, b) => {
+      if (a.generalScore !== b.generalScore) return a.generalScore - b.generalScore;
+      if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+      if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+      if (a.area !== b.area) return a.area - b.area;
+      if (a.w !== b.w) return a.w - b.w;
+      return a.h - b.h;
+    });
+
+  for (const option of remainingRanked) {
+    if (topOptions.length >= TOP_RECOMMENDATIONS) break;
+    addUnique(option);
+  }
+
+  const otherOptions = options
+    .filter(o => !used.has(optionKey(o)))
+    .sort((a, b) => {
+      if (a.generalScore !== b.generalScore) return a.generalScore - b.generalScore;
+      if (a.frictionDiff !== b.frictionDiff) return a.frictionDiff - b.frictionDiff;
+      if (a.ratioDiff !== b.ratioDiff) return a.ratioDiff - b.ratioDiff;
+      if (a.area !== b.area) return a.area - b.area;
+      if (a.w !== b.w) return a.w - b.w;
+      return a.h - b.h;
+    })
+    .slice(0, MAX_RESULTS - TOP_RECOMMENDATIONS);
 
   let output = `
     <b><u>${displayAirType(airType)}</u></b><br><br>
-    <b>Best 3 Options:</b>
+    <b>Best 5 Options:</b>
 
     <table class="results-table">
       <thead>
