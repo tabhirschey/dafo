@@ -30,8 +30,8 @@ const MAX_RESULTS = 10;
 
 // Rectangular ranking weights.
 // Friction is primary, but squareness and compactness still matter.
-const FRICTION_WEIGHT = 0.55;
-const SQUARENESS_WEIGHT = 0.40;
+const FRICTION_WEIGHT = 0.65;
+const SQUARENESS_WEIGHT = 0.30;
 const AREA_WEIGHT = 0.05;
 
 // Allows close ductulator-style options slightly above target friction.
